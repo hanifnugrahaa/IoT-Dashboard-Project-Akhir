@@ -8,12 +8,13 @@ import Footer from './components/layout/Footer';
 import AQICard from './components/dashboard/AQICard';
 import SensorGrid from './components/dashboard/SensorGrid';
 import ChartCard from './components/dashboard/ChartCard';
-import SystemStatus from './components/dashboard/SystemStatus';
 import './styles/animations.css';
 
 function App() {
-  const { sensorData, isLoading, lastUpdated, legacyData, refreshData } = useSensorData();
+  const { sensorData, isLoading, refreshData } = useSensorData();
   const currentTime = useClock();
+
+  console.log('App rendering:', { isLoading, sensorData });
 
   return (
     <>
@@ -21,7 +22,7 @@ function App() {
         {isLoading && <LoadingScreen />}
       </AnimatePresence>
 
-      {!isLoading && (
+      {!isLoading && sensorData && (
         <div className="min-h-screen text-gray-800 bg-cover bg-center bg-fixed"
           style={{
             backgroundImage: 'url(/bg11.jpg)',
@@ -32,17 +33,18 @@ function App() {
             position: 'relative',
           }}>
           
-          {/* Light Overlay untuk meningkatkan kontras */}
+          {/* Light Overlay */}
           <div className="fixed inset-0 bg-gradient-to-br from-white/15 via-transparent to-white/10 pointer-events-none backdrop-blur-sm"></div>
 
           <Header currentTime={currentTime} />
 
           <main className="relative container mx-auto px-4 md:px-6 py-8 z-10 space-y-8">
-            <AQICard aqi={sensorData} />
+            {/* FIX: Pass aqi VALUE, not object */}
+            <AQICard aqi={sensorData.aqi?.value || 78} />
             
             <SensorGrid 
-            sensorData={sensorData} 
-            onRefresh={refreshData}
+              sensorData={sensorData} 
+              onRefresh={refreshData}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -65,68 +67,22 @@ function App() {
           
             <Footer />
           </main>
+        </div>
+      )}
 
-          {/* CSS Animations */}
-          <style jsx>{`
-            @keyframes natural-float {
-              0% {
-                transform: 
-                  translate(0, 0) 
-                  rotate(0deg) 
-                  scale(1);
-                opacity: 0.3;
-                animation-timing-function: ease-in-out;
-              }
-              10% {
-                transform: 
-                  translate(8px, -6px) 
-                  rotate(36deg) 
-                  scale(1.05);
-                opacity: 0.45;
-                animation-timing-function: ease-out;
-              }
-              30% {
-                transform: 
-                  translate(12px, 4px) 
-                  rotate(108deg) 
-                  scale(1.1);
-                opacity: 0.5;
-                animation-timing-function: ease-in-out;
-              }
-              50% {
-                transform: 
-                  translate(-10px, 10px) 
-                  rotate(180deg) 
-                  scale(0.95);
-                opacity: 0.4;
-                animation-timing-function: ease-in;
-              }
-              70% {
-                transform: 
-                  translate(-6px, -8px) 
-                  rotate(252deg) 
-                  scale(1.02);
-                opacity: 0.35;
-                animation-timing-function: ease-in-out;
-              }
-              90% {
-                transform: 
-                  translate(4px, 6px) 
-                  rotate(324deg) 
-                  scale(0.98);
-                opacity: 0.42;
-                animation-timing-function: ease-out;
-              }
-              100% {
-                transform: 
-                  translate(0, 0) 
-                  rotate(360deg) 
-                  scale(1);
-                opacity: 0.3;
-                animation-timing-function: ease-in-out;
-              }
-            }
-          `}</style>
+      {/* Fallback jika no data */}
+      {!isLoading && !sensorData && (
+        <div className="min-h-screen flex items-center justify-center bg-black">
+          <div className="text-white text-center p-8">
+            <h1 className="text-2xl mb-4">⚠️ No Sensor Data Available</h1>
+            <p className="text-gray-400 mb-6">Unable to load sensor data. Please check connection.</p>
+            <button 
+              onClick={refreshData}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium"
+            >
+              Retry Connection
+            </button>
+          </div>
         </div>
       )}
     </>

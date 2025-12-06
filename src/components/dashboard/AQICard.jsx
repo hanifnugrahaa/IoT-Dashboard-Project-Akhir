@@ -4,6 +4,10 @@ import { Activity, Wind, AlertTriangle, CheckCircle } from 'lucide-react';
 import ClearGlassCard from '../common/ClearGlassCard';
 
 const AQICard = ({ aqi }) => {
+  // FIX: Ensure aqi is a number
+  const aqiValue = typeof aqi === 'object' 
+    ? (aqi?.value || aqi?.aqi || 78) 
+    : (aqi || 78);
   
   // AQI Levels
   const aqiLevels = [
@@ -15,8 +19,7 @@ const AQICard = ({ aqi }) => {
     { range: [301, 500], label: 'Hazardous', color: '#7C3AED', emoji: '☠️', desc: 'Emergency conditions' }
   ];
 
-  const aqiValue = typeof aqiD    === 'object' ? aqi || aqi : aqi;
-const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiValue <= level.range[1]) || aqiLevels[0];
+  const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiValue <= level.range[1]) || aqiLevels[0];
 
   // Primary Pollutant Progress
   const pollutants = [
@@ -35,40 +38,68 @@ const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiVa
       <div className="p-8">
         <div className="flex flex-col lg:flex-row items-start justify-between gap-8">
           {/* Left Side - Main AQI */}
-          {/* Left Side - Main AQI */}
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-6">
-              <div 
-                className="p-3 rounded-xl"
-                style={{
-                  background: 'rgba(14, 165, 233, 0.25)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.4)'
-                }}
-              >
-                <Activity className="text-white" size={32} />
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/30 rounded-xl blur-lg"></div>
+                <div 
+                  className="relative p-4 rounded-xl backdrop-blur-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${currentLevel.color}40, ${currentLevel.color}20)`,
+                    border: `1px solid ${currentLevel.color}60`,
+                    boxShadow: `0 0 30px ${currentLevel.color}30`
+                  }}
+                >
+                  <Activity className="text-white" size={36} />
+                </div>
               </div>
               <div>
                 <div className="text-white/80 text-sm uppercase tracking-wider">Air Quality Index</div>
-                <div className="text-5xl md:text-7xl font-bold text-white mt-2 drop-shadow-lg">
-                  {aqi}
+                <div className="text-6xl md:text-7xl font-bold text-white mt-2 drop-shadow-lg">
+                  {aqiValue}
+                </div>
+                <div className="text-2xl mt-3 flex items-center gap-3">
+                  <span className={currentLevel.label === 'Good' ? 'text-emerald-400' : 
+                                  currentLevel.label === 'Moderate' ? 'text-yellow-400' : 
+                                  'text-red-400 font-bold'}>
+                    {currentLevel.emoji} {currentLevel.label}
+                  </span>
+                  <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: currentLevel.color }}></div>
                 </div>
               </div>
             </div>
             
             <div className="space-y-4">
-              <div className={`text-2xl font-bold ${status.color} flex items-center gap-3`}>
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                {status.text}
-              </div>
               <p className="text-white/90 text-lg max-w-2xl">
-                Air quality is satisfactory and poses little to no risk. 
-                Normal outdoor activities can continue without restrictions.
+                {currentLevel.desc}. {aqiValue < 100 
+                  ? 'Normal outdoor activities can continue without restrictions.' 
+                  : 'Consider reducing prolonged or heavy exertion.'}
               </p>
+              
+              {/* Recommendations */}
+              <div className="flex items-start gap-3 p-4 rounded-xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                {aqiValue < 100 ? (
+                  <CheckCircle className="text-emerald-400 mt-0.5 flex-shrink-0" size={20} />
+                ) : (
+                  <AlertTriangle className="text-yellow-400 mt-0.5 flex-shrink-0" size={20} />
+                )}
+                <div className="text-white/80 text-sm">
+                  {aqiValue < 50 ? 'Perfect day for outdoor activities!' :
+                   aqiValue < 100 ? 'Good air quality. Enjoy your day!' :
+                   aqiValue < 150 ? 'Sensitive individuals should limit prolonged outdoor exertion.' :
+                   'Everyone should reduce prolonged or heavy exertion outdoors.'}
+                </div>
+              </div>
             </div>
           </div>
           
-          {/* Right Side - Pollutant Meter dengan Design Aesthetic */}
+          {/* Right Side - Pollutant Meter */}
           <div className="lg:w-96 space-y-6">
             <div className="text-center">
               <div className="text-white/80 text-sm mb-2 flex items-center justify-center gap-2">
@@ -105,7 +136,7 @@ const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiVa
                 <motion.div
                   className="absolute top-0 left-0 h-3 rounded-full"
                   initial={{ width: 0 }}
-                  animate={{ width: `${(aqi / 500) * 100}%` }}
+                  animate={{ width: `${(aqiValue / 500) * 100}%` }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                   style={{
                     background: `linear-gradient(90deg, 
@@ -123,7 +154,7 @@ const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiVa
                 <motion.div
                   className="absolute top-1/2 w-4 h-4 rounded-full border-2 border-white"
                   initial={{ left: 0 }}
-                  animate={{ left: `${(aqi / 500) * 100}%` }}
+                  animate={{ left: `${(aqiValue / 500) * 100}%` }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                   style={{
                     background: currentLevel.color,
@@ -132,7 +163,7 @@ const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiVa
                   }}
                 >
                   <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-bold text-white">
-                    AQI {aqi}
+                    AQI {aqiValue}
                   </div>
                 </motion.div>
               </div>

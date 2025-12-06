@@ -7,7 +7,7 @@ const LoadingScreen = () => {
   const [remainingTime, setRemainingTime] = useState(10);
 
   useEffect(() => {
-    const duration = 10000; // 10 detik
+    const duration = 9500; // 10 detik
     const interval = 50;
     const steps = duration / interval;
     const increment = 100 / steps;
@@ -33,7 +33,7 @@ const LoadingScreen = () => {
   }, []);
 
   const getLoadingText = () => {
-    if (progress < 20) return "Loading 3D visualization...";
+    if (progress < 20) return "Loading visualization...";
     if (progress < 40) return "Initializing sensor modules...";
     if (progress < 60) return "Connecting to IoT network...";
     if (progress < 80) return "Calibrating air quality sensors...";
@@ -155,9 +155,6 @@ const LoadingScreen = () => {
             <div className="text-white/80 text-xl font-light mb-2">
               {getLoadingText()}
             </div>
-            <div className="text-white/40 text-sm">
-              GamaSense Air Quality Monitoring System
-            </div>
           </motion.div>
 
           {/* Progress Info */}
@@ -168,7 +165,7 @@ const LoadingScreen = () => {
             </div>
             <div className="flex items-center gap-3">
               <div className="text-white/40 text-xs">
-                Stage {Math.floor(progress / 20) + 1}/5
+                Stage {Math.floor(progress / 20)}/5
               </div>
               <div className="font-mono font-bold text-white bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent text-lg">
                 {Math.round(progress)}%
@@ -197,7 +194,7 @@ const LoadingScreen = () => {
   
   {/* Progress Dots - PUTIH */}
   <div className="absolute inset-0 flex justify-between items-center px-1">
-    {[0, 25, 50, 75, 100].map((point) => (
+    {[15, 25, 50, 75, 100].map((point) => (
       <div key={point} className="relative">
         <div className={`absolute -inset-1 rounded-full ${progress >= point ? 'bg-white/30 blur-sm' : 'bg-white/10 blur-xs'}`}></div>
         <div className={`relative w-2 h-2 rounded-full ${progress >= point ? 'bg-white' : 'bg-white/40'}`}></div>

@@ -36,7 +36,7 @@ const Header = ({ currentTime }) => {
                   <div className="absolute inset-0 bg-green-400 rounded-full blur animate-pulse"></div>
                   <div className="relative w-2 h-2 bg-green-300 rounded-full"></div>
                 </div>
-                <span className="text-white font-medium">Live Stream</span>
+                <span className="text-white font-medium">Connected</span>
                 <Wifi size={14} className="text-green-300" />
               </div>
             </ClearGlassBadge>

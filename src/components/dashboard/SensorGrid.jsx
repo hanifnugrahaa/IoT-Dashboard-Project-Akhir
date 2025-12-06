@@ -3,46 +3,48 @@ import SensorValueCard from './SensorValueCard';
 import AQICard from './AQICard';
 
 const SensorGrid = ({ sensorData, onRefresh }) => {
-  // Fallback data jika sensorData null
-  const fallbackData = {
-    aqi: { value: 78, unit: 'AQI', status: { status: 'good', emoji: '🙂', color: '#3B82F6' } },
-    co: { value: 24.5, unit: 'ppm', status: { status: 'normal', emoji: '👍', color: '#3B82F6' } },
-    temperature: { value: 26.8, unit: '°C', status: { status: 'comfortable', emoji: '😊', color: '#10B981' } },
-    humidity: { value: 65, unit: '%', status: { status: 'comfortable', emoji: '😊', color: '#10B981' } }
-  };
+  // Safe guard untuk null/undefined data
+  if (!sensorData) {
+    return (
+      <div className="text-center p-8 text-white/60">
+        <p>Waiting for sensor data...</p>
+      </div>
+    );
+  }
 
-  const data = sensorData || fallbackData;
+  // Destructure dengan default values
+  const { 
+    aqi = { value: 78, unit: 'AQI', status: {}, trend: {} },
+    co = { value: 24.5, unit: 'ppm', status: {}, trend: {} },
+    temperature = { value: 26.8, unit: '°C', status: {}, trend: {} },
+    humidity = { value: 65, unit: '%', status: {}, trend: {} }
+  } = sensorData;
 
   return (
     <>
-      {/* AQI Card */}
-      <div className="mb-8">
-        <AQICard aqi={data.aqi.value} />
-      </div>
-
       {/* Sensor Value Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <SensorValueCard
           title="Air Quality"
-          sensorData={data.aqi}
+          sensorData={aqi}
           onRefresh={onRefresh}
         />
         
         <SensorValueCard
           title="Carbon Monoxide"
-          sensorData={data.co}
+          sensorData={co}
           onRefresh={onRefresh}
         />
         
         <SensorValueCard
           title="Temperature"
-          sensorData={data.temperature}
+          sensorData={temperature}
           onRefresh={onRefresh}
         />
         
         <SensorValueCard
           title="Humidity"
-          sensorData={data.humidity}
+          sensorData={humidity}
           onRefresh={onRefresh}
         />
       </div>
