@@ -43,8 +43,8 @@ function App() {
             <AQICard aqi={sensorData.aqi?.value || 78} />
             
             <SensorGrid 
-              sensorData={sensorData} 
-              onRefresh={refreshData}
+            sensorData={sensorData.sensorData} 
+            onRefresh={refreshData}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

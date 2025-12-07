@@ -1,112 +1,169 @@
+// hooks/useSensorData.js
 import { useState, useEffect } from 'react';
+import { airQualityWebSocket } from '../services/websocket';
 
-// Simple dummy data generator dengan format konsisten
-const generateSensorData = () => {
-  return {
-    timestamp: new Date().toISOString(),
-    aqi: { 
-      value: Math.floor(Math.random() * 50) + 50, // 50-100
-      unit: 'AQI', 
-      status: { 
-        status: 'good', 
-        emoji: '🙂', 
-        color: '#3B82F6',
-        description: 'Air quality is acceptable'
-      },
-      trend: { trend: 'stable', change: 0 }
-    },
-    co: { 
-      value: Math.random() * 15 + 10, // 10-25
-      unit: 'ppm', 
-      status: { 
-        status: 'normal', 
-        emoji: '👍', 
-        color: '#3B82F6',
-        description: 'Normal CO level'
-      },
-      trend: { trend: 'stable', change: 0 }
-    },
-    temperature: { 
-      value: Math.random() * 8 + 24, // 24-32
-      unit: '°C', 
-      status: { 
-        status: 'comfortable', 
-        emoji: '😊', 
-        color: '#10B981',
-        description: 'Comfortable temperature'
-      },
-      trend: { trend: 'stable', change: 0 }
-    },
-    humidity: { 
-      value: Math.random() * 30 + 50, // 50-80
-      unit: '%', 
-      status: { 
-        status: 'comfortable', 
-        emoji: '😊', 
-        color: '#10B981',
-        description: 'Comfortable humidity'
-      },
-      trend: { trend: 'stable', change: 0 }
+// Helper buat transform data Node-RED ke format UI
+const transformNodeRedData = (nodeRedData) => {
+  console.log('📦 Processing raw data:', nodeRedData);
+  
+  // Data dari Node-RED BISA dua format:
+  // 1. Format langsung: {aqi: 0, co_ppm: '0.00', ...}
+  // 2. Format dengan wrapper: {topic: '...', payload: {...}}
+  
+  let payload;
+  
+  if (nodeRedData && typeof nodeRedData === 'object') {
+    // Cek apakah ada property 'payload' (format wrapper)
+    if (nodeRedData.payload !== undefined) {
+      payload = nodeRedData.payload;
+    } else {
+      // Langsung pakai data sebagai payload
+      payload = nodeRedData;
     }
+  } else {
+    // Fallback ke default
+    payload = { aqi: 78, co_ppm: '0.00', temperature: 25, humidity: 65 };
+  }
+  
+  console.log('✅ Extracted payload:', payload);
+  
+  // Helper buat status color (sama seperti sebelumnya)
+  const getAQIStatus = (aqi) => {
+    if (aqi <= 50) return { label: 'Good', color: '#10B981', level: 'good' };
+    if (aqi <= 100) return { label: 'Moderate', color: '#F59E0B', level: 'moderate' };
+    if (aqi <= 150) return { label: 'Unhealthy', color: '#EF4444', level: 'unhealthy' };
+    return { label: 'Hazardous', color: '#8B5CF6', level: 'hazardous' };
+  };
+
+  const getCOStatus = (co) => {
+    const value = parseFloat(co) || 0;
+    if (value < 9) return { label: 'Good', color: '#10B981' };
+    if (value < 35) return { label: 'Moderate', color: '#F59E0B' };
+    return { label: 'Unhealthy', color: '#EF4444' };
+  };
+
+  const getTempStatus = (temp) => {
+    const value = temp || 25;
+    if (value >= 20 && value <= 30) return { label: 'Normal', color: '#3B82F6' };
+    if (value > 30) return { label: 'Hot', color: '#EF4444' };
+    return { label: 'Cool', color: '#60A5FA' };
+  };
+
+  const getHumidityStatus = (hum) => {
+    const value = hum || 65;
+    if (value >= 40 && value <= 70) return { label: 'Comfortable', color: '#10B981' };
+    if (value > 70) return { label: 'High', color: '#F59E0B' };
+    return { label: 'Low', color: '#F59E0B' };
+  };
+
+  // Format yang di-expect oleh komponen lu
+  return {
+    // BUAT AQICard (butuh number langsung)
+    aqi: payload.aqi || 78,
+    
+    // BUAT SensorGrid (format lengkap)
+    sensorData: {
+      aqi: {
+        value: payload.aqi || 78,
+        unit: 'AQI',
+        status: getAQIStatus(payload.aqi || 78),
+        trend: { direction: 'stable', value: 0 }
+      },
+      co: {
+        value: parseFloat(payload.co_ppm) || 0.0,
+        unit: 'ppm',
+        status: getCOStatus(payload.co_ppm || '0.00'),
+        trend: { direction: 'stable', value: 0 }
+      },
+      temperature: {
+        value: payload.temperature || 25,
+        unit: '°C',
+        status: getTempStatus(payload.temperature || 25),
+        trend: { direction: 'stable', value: 0 }
+      },
+      humidity: {
+        value: payload.humidity || 65,
+        unit: '%',
+        status: getHumidityStatus(payload.humidity || 65),
+        trend: { direction: 'stable', value: 0 }
+      }
+    },
+    
+    // Raw data untuk debugging
+    raw: nodeRedData,
+    timestamp: new Date().toISOString()
   };
 };
 
 export const useSensorData = () => {
   const [sensorData, setSensorData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('useSensorData: Initializing...');
-    
-    // Simulate 2 second loading for loading screen
-    const loadingTimer = setTimeout(() => {
-      const initialData = generateSensorData();
-      console.log('useSensorData: Data loaded', initialData);
-      setSensorData(initialData);
-      setIsLoading(false);
-    }, 10000);
+    let isMounted = true;
 
-    // Auto-refresh setiap 30 detik
-    const refreshInterval = setInterval(() => {
-      if (!isLoading) {
-        const updatedData = generateSensorData();
-        console.log('useSensorData: Auto-refresh', updatedData);
-        setSensorData(updatedData);
+  const handleWebSocketData = (rawData) => {
+  if (!isMounted) return;
+  
+  console.log('📡 Received from Node-RED:', rawData);
+  
+  try {
+    // RAW DATA langsung dari WebSocket (tanpa nested payload)
+    // Contoh: {aqi: 0, co_ppm: '0.00', temperature: 28, humidity: 75}
+    
+    const transformed = transformNodeRedData(rawData);
+    console.log('🔄 Transformed:', transformed);
+    
+    setSensorData(transformed);
+    setIsLoading(false);
+    setError(null);
+  } catch (err) {
+    console.error('❌ Transformation error:', err, 'Raw data:', rawData);
+    setError('Invalid data format: ' + err.message);
+  }
+};
+
+    // Subscribe ke WebSocket
+    const unsubscribe = airQualityWebSocket.subscribe(handleWebSocketData);
+
+    // Fallback timeout
+    const timeout = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.log('⏰ Connection timeout');
+        setError('Not receiving data. Check WebSocket connection.');
+        setIsLoading(false);
       }
-    }, 30000);
+    }, 8000);
 
     return () => {
-      clearTimeout(loadingTimer);
-      clearInterval(refreshInterval);
+      isMounted = false;
+      unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 
   const refreshData = () => {
-    console.log('useSensorData: Manual refresh triggered');
-    const newData = generateSensorData();
-    setSensorData(newData);
-  };
-
-  // Legacy format untuk backward compatibility
-  const legacyData = sensorData ? {
-    aqi: sensorData.aqi.value,
-    co: sensorData.co.value,
-    air_quality: Math.round(sensorData.aqi.value * 4.38),
-    temperature: sensorData.temperature.value,
-    humidity: sensorData.humidity.value
-  } : {
-    aqi: 78,
-    co: 24.5,
-    air_quality: 342,
-    temperature: 26.8,
-    humidity: 65
+    setIsLoading(true);
+    // Request fresh data dari Node-RED
+    airQualityWebSocket.send({ 
+      type: 'request',
+      topic: 'airquality/gamasense',
+      timestamp: Date.now()
+    });
+    
+    // Auto reset loading setelah 3 detik
+    setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+      }
+    }, 3000);
   };
 
   return { 
     sensorData, 
     isLoading, 
-    legacyData,
-    refreshData,
-    lastUpdated: new Date()
+    error,
+    refreshData 
   };
 };

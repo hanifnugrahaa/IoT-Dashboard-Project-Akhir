@@ -24,7 +24,20 @@ const SensorValueCard = ({
     );
   }
   
-  const { value, unit, status, trend, description } = sensorData;
+  const { value, unit, status = {}, trend = {}, description } = sensorData;
+  
+  // Safe defaults
+  const safeStatus = {
+    label: status.label || 'Normal',
+    color: status.color || '#3B82F6',
+    emoji: status.emoji || '📊',
+    level: status.level || 'normal'
+  };
+  
+  const safeTrend = {
+    direction: trend.direction || 'stable',
+    value: trend.value || 0
+  };
   
   const getIcon = () => {
     const iconProps = { className: "text-white", size: 32 };
@@ -45,7 +58,7 @@ const SensorValueCard = ({
   };
 
   const getTrendIcon = () => {
-    switch(trend.trend) {
+    switch(safeTrend.direction) {
       case 'up': 
         return <TrendingUp className="w-4 h-4 text-red-400" />;
       case 'down': 
@@ -56,8 +69,10 @@ const SensorValueCard = ({
   };
 
   const getTrendText = () => {
-    if (trend.change === 0) return 'No change';
-    return `${trend.trend === 'up' ? '+' : '-'}${trend.change.toFixed(1)}${unit}`;
+    if (safeTrend.value === 0) return 'No change';
+    
+    const prefix = safeTrend.direction === 'up' ? '+' : '-';
+    return `${prefix}${Math.abs(safeTrend.value).toFixed(1)}${unit}`;
   };
 
   const getColor = () => {
@@ -83,11 +98,11 @@ const SensorValueCard = ({
               <span 
                 className="text-xs px-2 py-0.5 rounded-full text-white"
                 style={{ 
-                  background: `${status.color}40`,
-                  border: `1px solid ${status.color}60`
+                  background: `${safeStatus.color}40`,
+                  border: `1px solid ${safeStatus.color}60`
                 }}
               >
-                {status.status.toUpperCase()}
+                {safeStatus.label.toUpperCase()}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
@@ -97,8 +112,8 @@ const SensorValueCard = ({
               <div className="text-white/60 text-lg">{unit}</div>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-2xl">{status.emoji}</span>
-              <span className="text-white/80 text-sm">{description}</span>
+              <span className="text-2xl">{safeStatus.emoji}</span>
+              <span className="text-white/80 text-sm">{description || safeStatus.label}</span>
             </div>
           </div>
           
@@ -123,8 +138,8 @@ const SensorValueCard = ({
           <div className="flex items-center gap-2">
             {getTrendIcon()}
             <span className={`text-sm ${
-              trend.trend === 'up' ? 'text-red-400' : 
-              trend.trend === 'down' ? 'text-green-400' : 
+              safeTrend.direction === 'up' ? 'text-red-400' : 
+              safeTrend.direction === 'down' ? 'text-green-400' : 
               'text-gray-400'
             }`}>
               {getTrendText()}
@@ -150,9 +165,9 @@ const SensorValueCard = ({
             <div className="flex items-center gap-2">
               <div 
                 className="w-2 h-2 rounded-full animate-pulse" 
-                style={{ background: status.color }}
+                style={{ background: safeStatus.color }}
               />
-              <span className="text-white text-sm font-medium">{status.status}</span>
+              <span className="text-white text-sm font-medium">{safeStatus.label}</span>
             </div>
           </div>
           
@@ -164,8 +179,8 @@ const SensorValueCard = ({
               animate={{ width: `${getStatusPercentage(title, value)}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
               style={{
-                background: `linear-gradient(90deg, ${status.color}, ${color})`,
-                boxShadow: `0 0 10px ${status.color}50`
+                background: `linear-gradient(90deg, ${safeStatus.color}, ${color})`,
+                boxShadow: `0 0 10px ${safeStatus.color}50`
               }}
             />
           </div>
@@ -178,6 +193,7 @@ const SensorValueCard = ({
     </ClearGlassCard>
   );
 };
+
 
 // Helper functions
 const getStatusPercentage = (title, value) => {
