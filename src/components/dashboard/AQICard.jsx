@@ -4,7 +4,7 @@ import { Activity, Wind, AlertTriangle, CheckCircle } from 'lucide-react';
 import ClearGlassCard from '../common/ClearGlassCard';
 
 const AQICard = ({ aqi }) => {
-  // FIX: Ensure aqi is a number
+  // Ensure aqi is a number
   const aqiValue = typeof aqi === 'object' 
     ? (aqi?.value || aqi?.aqi || 78) 
     : (aqi || 78);
@@ -20,18 +20,6 @@ const AQICard = ({ aqi }) => {
   ];
 
   const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiValue <= level.range[1]) || aqiLevels[0];
-
-  // Primary Pollutant Progress
-  const pollutants = [
-    { name: 'PM2.5', level: 65, color: '#3B82F6', max: 100 },
-    { name: 'CO', level: 24, color: '#EF4444', max: 50 },
-    { name: 'NO₂', level: 42, color: '#8B5CF6', max: 100 },
-    { name: 'O₃', level: 31, color: '#10B981', max: 100 }
-  ];
-
-  const primaryPollutant = pollutants.reduce((prev, current) => 
-    (current.level / current.max) > (prev.level / prev.max) ? current : prev
-  );
 
   return (
     <ClearGlassCard>
@@ -99,22 +87,19 @@ const AQICard = ({ aqi }) => {
             </div>
           </div>
           
-          {/* Right Side - Pollutant Meter */}
+          {/* Right Side - AQI Meter (BUKAN CO) */}
           <div className="lg:w-96 space-y-6">
             <div className="text-center">
               <div className="text-white/80 text-sm mb-2 flex items-center justify-center gap-2">
                 <Wind size={16} />
                 Primary Pollutant
               </div>
-              <div className="text-2xl font-bold text-white mb-1">{primaryPollutant.name}</div>
-              <div className="text-white/60 text-sm">
-                {primaryPollutant.level} {primaryPollutant.name === 'CO' ? 'ppm' : 'μg/m³'}
-              </div>
+              <div className="text-2xl font-bold text-white mb-1">CO</div>
             </div>
             
-            {/* Aesthetic Progress Bar */}
+            {/* AQI Progress Bar */}
             <div className="space-y-4">
-              {/* Main Progress Bar */}
+              {/* Main AQI Progress Bar */}
               <div className="relative">
                 {/* Background Track dengan Gradient */}
                 <div className="h-3 rounded-full overflow-hidden"
@@ -168,7 +153,7 @@ const AQICard = ({ aqi }) => {
                 </motion.div>
               </div>
               
-              {/* Labels */}
+              {/* AQI Level Labels */}
               <div className="flex justify-between text-sm text-white/70 px-1">
                 <span className="text-emerald-400">Good</span>
                 <span className="text-yellow-400">Moderate</span>
@@ -176,30 +161,40 @@ const AQICard = ({ aqi }) => {
                 <span className="text-purple-400">Hazardous</span>
               </div>
               
-              {/* Pollutant Breakdown */}
+              {/* Pollutant Contribution */}
               <div className="space-y-3 mt-6">
-                <div className="text-white/80 text-sm mb-2">Pollutant Levels</div>
-                {pollutants.map((pollutant) => (
-                  <div key={pollutant.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ background: pollutant.color }}></div>
-                      <span className="text-white/70 text-sm">{pollutant.name}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {/* Mini Progress Bar */}
-                      <div className="w-24 h-1.5 rounded-full overflow-hidden bg-white/10">
-                        <div 
-                          className="h-full rounded-full"
-                          style={{ 
-                            width: `${(pollutant.level / pollutant.max) * 100}%`,
-                            background: pollutant.color
-                          }}
-                        />
-                      </div>
-                      <span className="text-white text-sm font-mono">{pollutant.level}</span>
-                    </div>
+                <div className="text-white/80 text-sm mb-2">Pollutant Contribution to AQI</div>
+                
+                {/* CO Contribution */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#EF4444]"></div>
+                    <span className="text-white/70 text-sm">Carbon Monoxide</span>
                   </div>
-                ))}
+                  <div className="flex items-center gap-3">
+                    {/* Mini Progress Bar */}
+                    <div className="w-24 h-1.5 rounded-full overflow-hidden bg-white/10">
+                      <div 
+                        className="h-full rounded-full bg-[#EF4444]"
+                        style={{ width: '48%' }}
+                      />
+                    </div>
+                    <span className="text-white text-sm font-mono">48%</span>
+                  </div>
+                </div>
+                
+                {/* Info Box */}
+                <div className="p-3 rounded-lg mt-4"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <div className="text-white/80 text-sm">
+                    AQI calculation is based on the highest concentration among measured pollutants. 
+                    Currently CO levels.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
