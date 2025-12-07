@@ -56,19 +56,24 @@ const transformNodeRedData = (nodeRedData) => {
     return { label: 'Low', color: '#F59E0B' };
   };
 
+  const aqiValue = payload.aqi !== undefined ? payload.aqi : 78;
+const coValue = parseFloat(payload.co_ppm) || 0;
+const tempValue = payload.temperature !== undefined ? payload.temperature : 25;
+const humValue = payload.humidity !== undefined ? payload.humidity : 65;
+
   // Format yang di-expect oleh komponen lu
   return {
     // BUAT AQICard (butuh number langsung)
-    aqi: payload.aqi || 78,
+     aqi: aqiValue,
     
     // BUAT SensorGrid (format lengkap)
     sensorData: {
       aqi: {
-        value: payload.aqi || 78,
-        unit: 'AQI',
-        status: getAQIStatus(payload.aqi || 78),
-        trend: { direction: 'stable', value: 0 }
-      },
+      value: aqiValue,  // ← OBJECT dengan property VALUE
+      unit: 'AQI',
+      status: getAQIStatus(aqiValue),
+      trend: { direction: 'stable', value: 0 }
+    },
       co: {
         value: parseFloat(payload.co_ppm) || 0.0,
         unit: 'ppm',

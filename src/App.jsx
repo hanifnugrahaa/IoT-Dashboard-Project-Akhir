@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useSensorData } from './hooks/useSensorData';
 import { useClock } from './hooks/useClock';
@@ -11,18 +11,40 @@ import ChartCard from './components/dashboard/ChartCard';
 import './styles/animations.css';
 
 function App() {
-  const { sensorData, isLoading, refreshData } = useSensorData();
+  const { sensorData, isLoading: wsLoading, refreshData } = useSensorData();
   const currentTime = useClock();
+  
+  // STATE BARU: Loading minimum 10 detik
+  const [minimumLoading, setMinimumLoading] = useState(true);
+  
+  console.log('App rendering:', { 
+    wsLoading, 
+    sensorData, 
+    minimumLoading 
+  });
 
-  console.log('App rendering:', { isLoading, sensorData });
+  // Set timer untuk minimum 10 detik
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('Minimum loading time (10s) completed');
+      setMinimumLoading(false);
+    }, 15000); // 10 detik
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Loading screen muncul jika:
+  // 1. Masih dalam 10 detik pertama ATAU
+  // 2. WebSocket masih loading
+  const showLoading = minimumLoading || wsLoading;
 
   return (
     <>
       <AnimatePresence>
-        {isLoading && <LoadingScreen />}
+        {showLoading && <LoadingScreen />}
       </AnimatePresence>
 
-      {!isLoading && sensorData && (
+      {!showLoading && sensorData && (
         <div className="min-h-screen text-gray-800 bg-cover bg-center bg-fixed"
           style={{
             backgroundImage: 'url(/bg11.jpg)',
@@ -39,12 +61,11 @@ function App() {
           <Header currentTime={currentTime} />
 
           <main className="relative container mx-auto px-4 md:px-6 py-8 z-10 space-y-8">
-            {/* FIX: Pass aqi VALUE, not object */}
-            <AQICard aqi={sensorData.aqi?.value || 78} />
+            <AQICard aqi={sensorData.aqi} />
             
             <SensorGrid 
-            sensorData={sensorData.sensorData} 
-            onRefresh={refreshData}
+              sensorData={sensorData.sensorData} 
+              onRefresh={refreshData}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -70,8 +91,7 @@ function App() {
         </div>
       )}
 
-      {/* Fallback jika no data */}
-      {!isLoading && !sensorData && (
+      {!showLoading && !sensorData && (
         <div className="min-h-screen flex items-center justify-center bg-black">
           <div className="text-white text-center p-8">
             <h1 className="text-2xl mb-4">⚠️ No Sensor Data Available</h1>

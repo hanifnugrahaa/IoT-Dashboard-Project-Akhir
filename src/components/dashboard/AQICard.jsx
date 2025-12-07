@@ -1,3 +1,4 @@
+//AQICard.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Wind, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -20,6 +21,17 @@ const AQICard = ({ aqi }) => {
   ];
 
   const currentLevel = aqiLevels.find(level => aqiValue >= level.range[0] && aqiValue <= level.range[1]) || aqiLevels[0];
+
+  const calculateCOPercentage = (coValue) => {
+  const value = coValue || 0;
+  
+  if (value <= 1) return (value / 1) * 20;
+  if (value <= 9) return 20 + ((value - 1) / 8) * 40;
+  if (value <= 35) return 60 + ((value - 9) / 26) * 40;
+  return 100;
+};
+
+const coPercentage = 75;
 
   return (
     <ClearGlassCard>
@@ -176,10 +188,10 @@ const AQICard = ({ aqi }) => {
                     <div className="w-24 h-1.5 rounded-full overflow-hidden bg-white/10">
                       <div 
                         className="h-full rounded-full bg-[#EF4444]"
-                        style={{ width: '48%' }}
+                        style={{ width: `${coPercentage}%` }}
                       />
                     </div>
-                    <span className="text-white text-sm font-mono">48%</span>
+                    <span className="text-white text-sm font-mono">{coPercentage}%</span>
                   </div>
                 </div>
                 

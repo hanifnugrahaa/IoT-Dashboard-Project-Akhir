@@ -1,9 +1,17 @@
+//SensorGrid.jsx
 import React from 'react';
 import SensorValueCard from './SensorValueCard';
 import AQICard from './AQICard';
 
 const SensorGrid = ({ sensorData, onRefresh }) => {
   // Safe guard untuk null/undefined data
+  console.log('📊 SensorGrid receiving data:', {
+    sensorData,
+    aqi: sensorData?.aqi,
+    co: sensorData?.co,
+    temperature: sensorData?.temperature,
+    humidity: sensorData?.humidity
+  });
   if (!sensorData) {
     return (
       <div className="text-center p-8 text-white/60">
